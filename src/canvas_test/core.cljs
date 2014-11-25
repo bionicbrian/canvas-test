@@ -4,8 +4,8 @@
 (enable-console-print!)
 
 (def actors 
-  [{:x {:current 0 :new 700} :y {:current 0 :new 700}}
-   {:x {:current 0 :new 700} :y {:current 0 :new 700}}])
+  [{:name "Brian" :x {:current 0 :new 700} :y {:current 0 :new 700}}
+   {:name "Finn" :x {:current 0 :new 700} :y {:current 0 :new 700}}])
 
 (def canvas (.createElement js/document "canvas"))
 (def ctx (.getContext canvas "2d"))
@@ -25,14 +25,14 @@
   (.clearRect ctx 0 0 (.-width canvas) (.-height canvas))
   (dorun (map (partial fill-actor-rect ctx) actors)))
 
-(defn split-distance [new current]
+(defn split-distance [current new]
   (+ current (* (- new current) 0.1)))
 
 (defn update-actor [{:keys [x y] :as actor}]
   (reduce
     (fn [m k] (update-in m [k :current] split-distance (get-in m [k :new])))
     actor
-    (keys actor)))
+    (keys (select-keys actor [:x :y]))))
 
 (defn update [actors]
   (map #(update-actor %) actors))
