@@ -15,8 +15,11 @@
 
 (.appendChild (.-body js/document) canvas)
 
+(defn is-greater-than-threshold? [dim]
+  (> (Math/abs (- (:current dim) (:new dim))) 0.5))
+
 (defn should-update? [actors]
-  (some (fn [{:keys [x y]}] (or (not= (:current x) (:new x)) (not= (:current y) (:new y)))) actors))
+  (some (fn [{:keys [x y]}] (some is-greater-than-threshold? [x y])) actors))
 
 (defn fill-actor-rect [ctx {:keys [x y]}]
   (.fillRect ctx (:current x) (:current y) 50 50))
@@ -37,13 +40,12 @@
 (defn update [actors]
   (map #(update-actor %) actors))
 
-(render canvas ctx actors)
-
 (defn loop-game [canvas ctx actors]
   (let [new-actors (update actors)]
     (if (should-update? new-actors)
-        (do
-          (render canvas ctx new-actors)))
-    (.requestAnimationFrame js/window (partial loop-game canvas ctx new-actors))))
+      (do
+        (render canvas ctx new-actors)
+        (.requestAnimationFrame js/window (partial loop-game canvas ctx new-actors))))))
         
+(render canvas ctx actors)
 (loop-game canvas ctx actors)
