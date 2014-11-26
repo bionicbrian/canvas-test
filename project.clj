@@ -1,6 +1,6 @@
 (defproject canvas-test "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+  :description "Just playing with CLJS and Canvas"
+  :url "http://bionicbrian.com"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2371"]]
