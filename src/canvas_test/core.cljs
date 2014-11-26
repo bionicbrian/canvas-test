@@ -3,9 +3,8 @@
 
 (enable-console-print!)
 
-(def actors 
-  [{:name "Brian" :x {:current 0 :new 700} :y {:current 0 :new 700}}
-   {:name "Finn" :x {:current 0 :new 700} :y {:current 0 :new 700}}])
+(def actors (atom [{:name "Brian" :x {:current 0 :new 700} :y {:current 0 :new 700}}
+                   {:name "Finn" :x {:current 0 :new 700} :y {:current 0 :new 700}}]))
 
 (def canvas (.createElement js/document "canvas"))
 (def ctx (.getContext canvas "2d"))
@@ -26,7 +25,7 @@
 
 (defn render [canvas ctx actors]
   (.clearRect ctx 0 0 (.-width canvas) (.-height canvas))
-  (dorun (map (partial fill-actor-rect ctx) actors)))
+  (dorun (map (partial fill-actor-rect ctx) @actors)))
 
 (defn split-distance [current new]
   (+ current (* (- new current) 0.1)))
@@ -42,11 +41,9 @@
 (defn update [actors]
   (map #(update-actor %) actors))
 
-(defn loop-game [canvas ctx actors]
-  (let [new-actors (update actors)]
-    (do
-      (render canvas ctx new-actors)
-      (.requestAnimationFrame js/window (partial loop-game canvas ctx new-actors)))))
+(defn loop-game []
+  (render canvas ctx actors)
+  (swap! actors update)
+  (.requestAnimationFrame js/window loop-game))
 
-(render canvas ctx actors)
-(loop-game canvas ctx actors)
+(loop-game)
