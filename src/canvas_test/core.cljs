@@ -1,5 +1,8 @@
 (ns canvas-test.core
-    (:require [goog.dom :as dom]))
+    (:require-macros [cljs.core.async.macros :refer [go]])
+    (:require [goog.dom :as dom]
+              [goog.events :as events]
+              [cljs.core.async :refer [put! chan <!]]))
 
 (enable-console-print!)
 
@@ -32,8 +35,7 @@
 
 (defn move-distance [m k]
   (if (is-greater-than-threshold? (k m))
-      (update-in m [k :current] split-distance (get-in m [k :new]))
-      (update-in m [k :new] #(rand 500))))
+      (update-in m [k :current] split-distance (get-in m [k :new]))))
 
 (defn update-actor [{:keys [x y] :as actor}]
   (reduce move-distance actor (keys (select-keys actor [:x :y]))))
@@ -41,9 +43,35 @@
 (defn update [actors]
   (map #(update-actor %) actors))
 
-(defn loop-game []
-  (render canvas ctx actors)
-  (swap! actors update)
-  (.requestAnimationFrame js/window loop-game))
+(defn update-actor-with-points [actor x y]
+  (let [new-points {:x x :y y}]
+    (.log js/console "Gonna update the actor with points")
+    (.log js/console (str "THe x is " x " and the y is " y))
+    (reduce (fn [m k] (update-in m [k :new] (k new-points))) actor (keys (select-keys actor [:x :y])))))
 
-(loop-game)
+(defn update-coords [actors e]
+  (let [x (.-offsetX e) y (.-offsetY e)]
+    (swap! actors #(map (fn [actor] (update-actor-with-points actor x y)) %))))
+
+(defn loop-game [chan]
+  (go (while true
+    (let [e (<! chan)]
+      ; (update-coords actors e))))
+      (.log js/console "Clickin"))))
+  (defn looper []
+    (if (should-update? @actors)
+        (do
+          (render canvas ctx actors)
+          (swap! actors update)
+          (.requestAnimationFrame js/window looper))))
+  (looper))
+
+(defn listen [el type]
+  (let [c (chan)]
+    (events/listen el type #(put! c %))
+    c))
+
+(defn init-game []
+  (loop-game (listen js/document "click")))
+
+(init-game)
